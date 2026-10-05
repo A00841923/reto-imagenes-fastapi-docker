@@ -30,3 +30,12 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+# El almacén de objetos (RustFS, compatible con S3). Las imágenes viven ahí, no en PostgreSQL.
+# Dentro de Docker se llama `almacen`; docker-compose.yml pone S3_ENDPOINT.
+s3_endpoint: str = "http://localhost:9000"
+s3_access_key: str
+s3_secret_key: str
+s3_bucket: str = "avisos"
+
+# Lo más grande que se acepta. La app de la Práctica 10 manda ~300 KB; una foto sin comprimir, 4 MB o más.
+imagen_max_bytes: int = 2 * 1024 * 1024
