@@ -1,0 +1,73 @@
+# Todo el backend en la red de Docker:
+#   docker compose up -d                   la base, el almacén y el servidor (http://localhost:8000)
+#   docker compose --profile tunel up -d   además, el túnel HTTPS
+#   docker compose logs tunel              ahí aparece la dirección https://…trycloudflare.com
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: avisos
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    # Sin `ports`: la base solo se ve dentro de la red de Docker. Así no choca con
+    # un PostgreSQL que ya tengas en el 5432. Para entrar: docker compose exec db psql -U postgres avisos
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d avisos"]
+      interval: 2s
+      retries: 30
+
+  # El almacén de objetos: guarda las imágenes. Habla S3, como Amazon, MinIO o R2.
+  almacen:
+    image: rustfs/rustfs:1.0.1
+    environment:
+      # Las mismas llaves del .env: RustFS las toma como su administrador y la API entra con ellas.
+      RUSTFS_ACCESS_KEY: ${S3_ACCESS_KEY}
+      RUSTFS_SECRET_KEY: ${S3_SECRET_KEY}
+      RUSTFS_CONSOLE_ENABLE: "true"
+    volumes:
+      - objetos:/data
+    # La consola web (9001) es una página que le habla a la API S3 (9000) desde tu
+    # navegador: por eso se publican las dos. Solo en 127.0.0.1: el resto del wifi no llega.
+    # La app NUNCA habla con el almacén: todo pasa por `api`.
+    ports:
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:9000/health"]
+      interval: 2s
+      retries: 30
+
+  api:
+    build: .
+    env_file: .env
+    environment:
+      # Dentro de la red de Docker, la base se llama `db` y el almacén `almacen`, no `localhost`.
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/avisos
+      S3_ENDPOINT: http://almacen:9000
+    # --reload + el volumen: editas app/ en tu máquina y el servidor se reinicia solo.
+    command: ["uv", "run", "--no-sync", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    volumes:
+      - ./app:/code/app
+    # Solo en 127.0.0.1: tu máquina y el emulador (10.0.2.2) llegan; el resto del wifi, no.
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      almacen:
+        condition: service_healthy
+
+  tunel:
+    image: cloudflare/cloudflared:2026.9.3
+    # Llega a la API por su nombre en la red de Docker. http2 porque muchas redes bloquean QUIC (UDP).
+    command: ["tunnel", "--no-autoupdate", "--protocol", "http2", "--url", "http://api:8000"]
+    depends_on:
+      - api
+    profiles: ["tunel"]
+
+volumes:
+  pgdata:
+  # Las imágenes. Como pgdata: sobrevive a `docker compose down`; `down -v` lo borra.
+  objetos:

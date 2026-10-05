@@ -1,0 +1,16 @@
+[project]
+name = "imagenes-fastapi"
+version = "0.1.0"
+description = "Modulo de identidad e imagenes de referencia para el reto de TC2007B: FastAPI + PostgreSQL + RustFS (S3), mismo contrato que la API de las Practicas 6, 8 y 10."
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi==0.141.1",
+    "uvicorn[standard]==0.53.0",
+    "sqlalchemy==2.0.54",
+    "psycopg[binary]==3.3.6",
+    "pyjwt==2.14.0",
+    "pwdlib[argon2]==0.3.1",
+    "pydantic-settings==2.15.0",
+    "python-multipart==0.0.32",
+    "boto3==1.43.108",
+]
