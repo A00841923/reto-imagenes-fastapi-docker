@@ -14,3 +14,17 @@ dependencies = [
     "python-multipart==0.0.32",
     "boto3==1.43.108",
 ]
+
+# Solo para probar. La imagen de Docker las instala (ver Dockerfile); en producción no harían falta.
+[dependency-groups]
+dev = [
+    "pytest==9.1.1",
+    "httpx2==2.13.1",  # el TestClient de FastAPI lo usa por debajo (con httpx, el viejo, avisa que está obsoleto)
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+# Una advertencia interna de Starlette 1.6 (usa un alias viejo de anyio). No es de nuestro
+# código ni se arregla desde aquí; se calla para que la salida muestre solo lo que importa.
+filterwarnings = ["ignore:The anyio.abc.BlockingPortal alias is deprecated:DeprecationWarning"]
