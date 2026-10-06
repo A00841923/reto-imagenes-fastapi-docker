@@ -45,4 +45,6 @@ carpetas están montadas. Tu `.env` y tus datos se conservan.
 | `tests/test_duplicados.py` | Tarjeta 2: el mismo envío dos veces. Una prueba de caracterización y un contrato por diseñar |
 | `tests/test_huerfanas.py` | Tarjeta 3: la imagen que queda sin aviso |
 
+El registro del equipo está en `docs/registro-calidad.md`: llénenlo mientras trabajan.
+
 Para correr solo una: `docker compose exec api uv run --no-sync pytest tests/test_permisos.py -v`
