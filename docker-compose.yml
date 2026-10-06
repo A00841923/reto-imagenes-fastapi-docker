@@ -50,6 +50,8 @@ services:
     command: ["uv", "run", "--no-sync", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
     volumes:
       - ./app:/code/app
+      # Las pruebas también se montan: editas una y la vuelves a correr, sin reconstruir.
+      - ./tests:/code/tests
     # Solo en 127.0.0.1: tu máquina y el emulador (10.0.2.2) llegan; el resto del wifi, no.
     ports:
       - "127.0.0.1:8000:8000"

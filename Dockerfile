@@ -8,9 +8,10 @@ ENV UV_LINK_MODE=copy \
     PYTHONUNBUFFERED=1
 
 # Primero las dependencias: si solo cambia tu código, Docker reutiliza esta capa
-# y reconstruir tarda segundos, no minutos.
+# y reconstruir tarda segundos, no minutos. Con el grupo dev: pytest y httpx, para
+# correr las pruebas dentro del contenedor (docker compose exec api uv run --no-sync pytest).
 COPY pyproject.toml uv.lock ./
-RUN uv sync --frozen --no-install-project --no-dev
+RUN uv sync --frozen --no-install-project
 
 COPY app ./app
 
